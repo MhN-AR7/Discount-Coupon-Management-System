@@ -7,13 +7,14 @@ import ir.maktabsharif.discount.repository.CouponRepository;
 import ir.maktabsharif.discount.util.DatabaseConfig;
 
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 public class CouponRepositoryImpl implements CouponRepository {
     @Override
     public Long insert(Coupon coupon) {
-        String query = "insert into coupons (code, discount_percent, max_usage, used_usage, expire_date, status)" +
+        String query = "insert into coupons (code, discount_percent, max_usage, used_count, expire_date, status)" +
                 " VALUES (?,?,?,?,?,?)  returning id;";
         try (Connection connection = DatabaseConfig.getConnection();
              PreparedStatement ps = connection.prepareStatement(query)
@@ -64,11 +65,42 @@ public class CouponRepositoryImpl implements CouponRepository {
 
     @Override
     public List<Coupon> findAll() {
-        return List.of();
+        String query = "SELECT * FROM coupons";
+        try (Connection connection = DatabaseConfig.getConnection();
+        PreparedStatement ps = connection.prepareStatement(query);
+        ResultSet rs = ps.executeQuery()) {
+            List<Coupon> coupons = new ArrayList<>();
+            while (rs.next()) {
+                coupons.add(new Coupon(
+                        rs.getLong(1),
+                        rs.getString(2),
+                        rs.getInt(3),
+                        rs.getInt(4),
+                        rs.getInt(5),
+                        rs.getDate(6).toLocalDate(),
+                        CouponStatus.valueOf(rs.getString(7))
+                ));
+            }
+
+            return coupons;
+        }
+        catch (SQLException e) {
+            throw new DatabaseConnectionException("Could not connect to database : " + e.getMessage());
+        }
     }
 
     @Override
     public boolean existCoupon(String code) {
-        return false;
+        String query = "SELECT * FROM coupons WHERE code = ?";
+        try (Connection connection = DatabaseConfig.getConnection();
+        PreparedStatement ps = connection.prepareStatement(query)) {
+            ps.setString(1, code);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        }
+        catch (SQLException e) {
+            throw new DatabaseConnectionException("Could not connect to database : " + e.getMessage());
+        }
     }
 }
