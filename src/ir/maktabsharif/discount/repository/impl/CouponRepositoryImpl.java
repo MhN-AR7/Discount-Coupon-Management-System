@@ -1,5 +1,6 @@
 package ir.maktabsharif.discount.repository.impl;
 
+import ir.maktabsharif.discount.enums.CouponStatus;
 import ir.maktabsharif.discount.exception.DatabaseConnectionException;
 import ir.maktabsharif.discount.model.Coupon;
 import ir.maktabsharif.discount.repository.CouponRepository;
@@ -7,6 +8,7 @@ import ir.maktabsharif.discount.util.DatabaseConfig;
 
 import java.sql.*;
 import java.util.List;
+import java.util.Optional;
 
 public class CouponRepositoryImpl implements CouponRepository {
     @Override
@@ -35,8 +37,29 @@ public class CouponRepositoryImpl implements CouponRepository {
     }
 
     @Override
-    public Coupon findById(Long id) {
-        return null;
+    public Optional<Coupon> findById(Long id) {
+        String query = "select * from coupons where id = ?;";
+        try(Connection connection = DatabaseConfig.getConnection();
+        PreparedStatement ps = connection.prepareStatement(query)){
+            ps.setLong(1, id);
+            try (ResultSet rs = ps.executeQuery()){
+                if (rs.next()) {
+                   return Optional.of(new Coupon(
+                           rs.getLong(1),
+                           rs.getString(2),
+                           rs.getInt(3),
+                           rs.getInt(4),
+                           rs.getInt(5),
+                           rs.getDate(6).toLocalDate(),
+                           CouponStatus.valueOf(rs.getString(7)))
+                   );
+                }
+                return Optional.empty();
+            }
+
+        } catch (SQLException e) {
+            throw new DatabaseConnectionException("Could not connect to database : " + e.getMessage());
+        }
     }
 
     @Override
