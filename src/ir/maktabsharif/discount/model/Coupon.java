@@ -22,6 +22,16 @@ public class Coupon {
         this.status = status;
     }
 
+    public Coupon(Long id, String code, Integer discountPercent, Integer maxUsage, Integer usedCount, LocalDate expireDate, CouponStatus status) {
+        this.id = id;
+        this.code = code;
+        this.discountPercent = discountPercent;
+        this.maxUsage = maxUsage;
+        this.usedCount = usedCount;
+        this.expireDate = expireDate;
+        this.status = status;
+    }
+
     public Long getId() {
         return id;
     }
